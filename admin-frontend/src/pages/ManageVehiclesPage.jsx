@@ -1,11 +1,11 @@
 // src/pages/ManageVehiclesPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2 } from 'react-icons/fi'; // Imported only used icons
-import Modal from '../components/Modal'; // Import the Modal component
-import AdminNavbar from '../components/NavbarAdmin'; // Import your existing AdminNavbar
-import AdminSidebar from '../components/AdminSidebar'; // Import your existing AdminSidebar
-import DashboardCard from '../components/DashboardCard'; // If needed for metrics
+import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi';
+import Modal from '../components/Modal';
+import AdminNavbar from '../components/NavbarAdmin';
+import AdminSidebar from '../components/AdminSidebar';
+import DashboardCard from '../components/DashboardCard';
 
 function ManageVehiclesPage() {
   // Initial mock data for vehicles
@@ -22,166 +22,146 @@ function ManageVehiclesPage() {
     { id: 10, make: 'Mazda', model: 'Mazda3', licensePlate: 'STU-8901', status: 'Available' },
   ];
 
-  // Placeholder data for dashboard metrics (optional)
+  // Placeholder data for dashboard metrics
   const metrics = [
     {
       title: 'Total Vehicles',
-      value: 100,
-      icon: <FiEdit size={24} />, // Replace with appropriate icons if needed
+      value: initialVehicles.length,
+      icon: <FiEdit size={24} />,
       bgColor: 'bg-indigo-500',
     },
     {
       title: 'Available',
-      value: 60,
+      value: initialVehicles.filter(v => v.status === 'Available').length,
       icon: <FiEdit size={24} />,
       bgColor: 'bg-green-500',
     },
     {
       title: 'In Use',
-      value: 30,
+      value: initialVehicles.filter(v => v.status === 'In Use').length,
       icon: <FiEdit size={24} />,
       bgColor: 'bg-yellow-500',
     },
     {
       title: 'Maintenance',
-      value: 10,
+      value: initialVehicles.filter(v => v.status === 'Maintenance').length,
       icon: <FiEdit size={24} />,
       bgColor: 'bg-red-500',
     },
   ];
 
   // State variables
-  const [vehicles, setVehicles] = useState(initialVehicles); // List of vehicles
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // Add Vehicle Modal
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Edit Vehicle Modal
-  const [currentVehicle, setCurrentVehicle] = useState(null); // Vehicle being edited
+  const [vehicles, setVehicles] = useState(initialVehicles);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentVehicle, setCurrentVehicle] = useState(null);
 
-  // Search and Filter states
-  const [searchQuery, setSearchQuery] = useState(''); // Search input
-  const [filterStatus, setFilterStatus] = useState('All'); // Status filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
 
-  // Persist vehicles to localStorage to maintain state across sessions
+  // Load & persist vehicles to localStorage
   useEffect(() => {
-    const savedVehicles = localStorage.getItem('vehicles');
-    if (savedVehicles) {
-      setVehicles(JSON.parse(savedVehicles));
-    }
+    const saved = localStorage.getItem('vehicles');
+    if (saved) setVehicles(JSON.parse(saved));
   }, []);
-
   useEffect(() => {
     localStorage.setItem('vehicles', JSON.stringify(vehicles));
   }, [vehicles]);
 
-  // Function to handle adding a new vehicle
+  // Handlers
   const handleAddVehicle = (vehicleData) => {
     const newVehicle = {
-      id: vehicles.length + 1, // Simple ID assignment; in real apps, use UUID or backend-generated IDs
+      id: vehicles.length ? vehicles[vehicles.length - 1].id + 1 : 1,
       ...vehicleData,
     };
     setVehicles([...vehicles, newVehicle]);
-    setIsAddModalOpen(false); // Close the Add Vehicle modal
+    setIsAddModalOpen(false);
   };
 
-  // Function to handle editing a vehicle
   const handleEditVehicle = (updatedData) => {
     setVehicles(
-      vehicles.map(vehicle =>
-        vehicle.id === currentVehicle.id ? { ...vehicle, ...updatedData } : vehicle
+      vehicles.map(v =>
+        v.id === currentVehicle.id ? { ...v, ...updatedData } : v
       )
     );
-    setIsEditModalOpen(false); // Close the Edit Vehicle modal
-    setCurrentVehicle(null); // Reset current vehicle
+    setIsEditModalOpen(false);
+    setCurrentVehicle(null);
   };
 
-  // Function to handle deleting a vehicle
-  const handleDeleteVehicle = (vehicleId) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this vehicle?');
-    if (!confirmDelete) return;
-
-    setVehicles(vehicles.filter(vehicle => vehicle.id !== vehicleId));
+  const handleDeleteVehicle = (id) => {
+    if (!window.confirm('Are you sure you want to delete this vehicle?')) return;
+    setVehicles(vehicles.filter(v => v.id !== id));
   };
 
-  // Function to open Edit Vehicle modal
   const openEditModal = (vehicle) => {
     setCurrentVehicle(vehicle);
     setIsEditModalOpen(true);
   };
 
-  // Function to handle search input change
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  // Function to handle status filter change
-  const handleFilterChange = (e) => {
-    setFilterStatus(e.target.value);
-  };
-
-  // Function to filter vehicles based on search query and status filter
-  const filteredVehicles = vehicles.filter(vehicle => {
+  // Filter logic
+  const filteredVehicles = vehicles.filter(v => {
     const matchesSearch =
-      vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = filterStatus === 'All' || vehicle.status === filterStatus;
-
+      v.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.licensePlate.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'All' || v.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
   return (
     <div className="flex">
       {/* Sidebar */}
-      <AdminSidebar /> {/* Sidebar is always visible on md and above, hidden on small screens */}
+      <AdminSidebar />
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="flex-1 min-h-screen bg-gray-50">
-        {/* Navbar */}
         <AdminNavbar />
 
-        {/* Dashboard Content */}
         <main className="p-6">
-          <h1 className="text-3xl font-bold mb-6">Manage Vehicles</h1>
+          {/* Header with Add button */}
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Manage Vehicles</h1>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              <FiPlus className="mr-2" />
+              Add Vehicle
+            </button>
+          </div>
 
-          {/* Metrics Grid */}
+          {/* Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {metrics.map((metric, index) => (
+            {metrics.map((m, i) => (
               <DashboardCard
-                key={index}
-                title={metric.title}
-                value={metric.value}
-                icon={metric.icon}
-                bgColor={metric.bgColor}
+                key={i}
+                title={m.title}
+                value={m.value}
+                icon={m.icon}
+                bgColor={m.bgColor}
               />
             ))}
           </div>
 
-          {/* Search and Filter */}
+          {/* Search & Filter */}
           <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0">
-            {/* Search Bar */}
-            <div className="w-full sm:w-1/2 md:w-1/3">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search by Make, Model, or License Plate..."
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <div className="w-full sm:w-1/2 md:w-1/4">
-              <select
-                value={filterStatus}
-                onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-              >
-                <option value="All">All Statuses</option>
-                <option value="Available">Available</option>
-                <option value="In Use">In Use</option>
-                <option value="Maintenance">Maintenance</option>
-              </select>
-            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search by Make, Model, or License Plate..."
+              className="w-full sm:w-1/2 md:w-1/3 px-3 py-2 border border-gray-300 rounded focus:border-blue-500"
+            />
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              className="w-full sm:w-1/2 md:w-1/4 px-3 py-2 border border-gray-300 rounded focus:border-blue-500"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Available">Available</option>
+              <option value="In Use">In Use</option>
+              <option value="Maintenance">Maintenance</option>
+            </select>
           </div>
 
           {/* Vehicles Table */}
@@ -189,39 +169,51 @@ function ManageVehiclesPage() {
             <table className="w-auto sm:w-full bg-white rounded shadow">
               <thead>
                 <tr>
-                  <th className="px-2 sm:px-4 py-2 border-b border-gray-300 text-left text-blue-500 tracking-wider text-sm md:text-base">ID</th>
-                  <th className="px-2 sm:px-4 py-2 border-b border-gray-300 text-left text-blue-500 tracking-wider text-sm md:text-base">Make</th>
-                  <th className="px-2 sm:px-4 py-2 border-b border-gray-300 text-left text-blue-500 tracking-wider text-sm md:text-base">Model</th>
-                  <th className="px-2 sm:px-4 py-2 border-b border-gray-300 text-left text-blue-500 tracking-wider text-sm md:text-base">License Plate</th>
-                  <th className="px-2 sm:px-4 py-2 border-b border-gray-300 text-left text-blue-500 tracking-wider text-sm md:text-base">Status</th>
-                  <th className="px-2 sm:px-4 py-2 border-b border-gray-300 text-center text-blue-500 tracking-wider text-sm md:text-base">Actions</th>
+                  {['ID','Make','Model','License Plate','Status','Actions'].map((h, i) => (
+                    <th
+                      key={i}
+                      className="px-4 py-2 border-b text-left text-blue-500 text-sm md:text-base"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredVehicles.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-2 sm:px-4 py-4 text-center text-sm md:text-base">No vehicles found.</td>
+                    <td colSpan="6" className="px-4 py-4 text-center">
+                      No vehicles found.
+                    </td>
                   </tr>
                 ) : (
-                  filteredVehicles.map(vehicle => (
-                    <tr key={vehicle.id} className="hover:bg-gray-100">
-                      <td className="px-2 sm:px-4 py-2 border-b border-gray-300 text-sm md:text-base">{vehicle.id}</td>
-                      <td className="px-2 sm:px-4 py-2 border-b border-gray-300 text-sm md:text-base">{vehicle.make}</td>
-                      <td className="px-2 sm:px-4 py-2 border-b border-gray-300 text-sm md:text-base">{vehicle.model}</td>
-                      <td className="px-2 sm:px-4 py-2 border-b border-gray-300 text-sm md:text-base">{vehicle.licensePlate}</td>
-                      <td className={`px-2 sm:px-4 py-2 border-b border-gray-300 text-sm md:text-base ${vehicle.status === 'Available' ? 'text-green-600' : vehicle.status === 'In Use' ? 'text-yellow-600' : 'text-red-600'}`}>
-                        {vehicle.status}
+                  filteredVehicles.map(v => (
+                    <tr key={v.id} className="hover:bg-gray-100">
+                      <td className="px-4 py-2 border-b">{v.id}</td>
+                      <td className="px-4 py-2 border-b">{v.make}</td>
+                      <td className="px-4 py-2 border-b">{v.model}</td>
+                      <td className="px-4 py-2 border-b">{v.licensePlate}</td>
+                      <td
+                        className={`px-4 py-2 border-b ${
+                          v.status === 'Available'
+                            ? 'text-green-600'
+                            : v.status === 'In Use'
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {v.status}
                       </td>
-                      <td className="px-2 sm:px-4 py-2 border-b border-gray-300 text-center text-sm md:text-base">
+                      <td className="px-4 py-2 border-b text-center">
                         <button
-                          onClick={() => openEditModal(vehicle)}
+                          onClick={() => openEditModal(v)}
                           className="text-blue-500 hover:text-blue-700 mr-2"
                           title="Edit Vehicle"
                         >
                           <FiEdit size={18} />
                         </button>
                         <button
-                          onClick={() => handleDeleteVehicle(vehicle.id)}
+                          onClick={() => handleDeleteVehicle(v.id)}
                           className="text-red-500 hover:text-red-700"
                           title="Delete Vehicle"
                         >
@@ -270,7 +262,7 @@ function VehicleForm({ initialData = {}, onSubmit, onCancel }) {
   const [make, setMake] = useState(initialData.make || '');
   const [model, setModel] = useState(initialData.model || '');
   const [licensePlate, setLicensePlate] = useState(initialData.licensePlate || '');
-  const [status, setStatus] = useState(initialData.status || 'Available'); // Default status
+  const [status, setStatus] = useState(initialData.status || 'Available');
 
   const handleSubmit = (e) => {
     e.preventDefault();
